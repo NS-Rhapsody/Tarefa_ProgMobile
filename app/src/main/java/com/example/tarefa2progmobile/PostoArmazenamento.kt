@@ -27,7 +27,7 @@ fun jsonParaPosto(json: JSONObject): Posto{
         nome = json.getString("nome"),
         precoAlcool = json.getString("precoAlcool"),
         precoGasolina = json.getString("precoGasolina"),
-        usarSetentaECinco = json.getString("usarSetentaECinco")
+        usarSetentaECinco = json.getBoolean("usarSetentaECinco")
     )
 }
 
