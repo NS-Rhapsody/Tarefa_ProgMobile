@@ -47,7 +47,8 @@ fun AppNav() {
     NavHost(navController = nav, startDestination = "lista"){
         composable("lista"){
             ListaPostos(
-                irParaAdicionarPosto = { nav.navigate("adicionarPosto") }
+                irParaAdicionarPosto = { nav.navigate("adicionarPosto") },
+                irParaEditarPosto = { index -> nav.navigate("editarPosto/$index") }
             )
         }
 
@@ -55,6 +56,10 @@ fun AppNav() {
             AdicionarPosto(
                 voltar = { nav.popBackStack() }
             )
+        }
+        composable("editarPosto/{index}"){ backStack ->
+            val index = backStack.arguments?.getString("index")?.toInt() ?: -1
+            EditarPosto(index = index, voltar = { nav.popBackStack() })
         }
     }
 }

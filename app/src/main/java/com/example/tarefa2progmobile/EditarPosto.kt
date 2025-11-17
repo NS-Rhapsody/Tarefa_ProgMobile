@@ -26,19 +26,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun AdicionarPosto(voltar: () -> Unit) {
+fun EditarPosto(index: Int, voltar: () -> Unit) {
 
     // Shared Preferences
 
     val context = LocalContext.current
-    val prefs = context.getSharedPreferences("MEUS_DADOS", Context.MODE_PRIVATE)
+    val lista = carregarListaPosto(context)
 
-    var precoAlcool by rememberSaveable { mutableStateOf("") }
-    var precoGasolina by rememberSaveable { mutableStateOf("") }
-    var posto by rememberSaveable { mutableStateOf("") }
-    var usarSetentaECinco by rememberSaveable { mutableStateOf(
-        prefs.getBoolean("usar75", false)
-    ) }
+    val postoOriginal = lista[index]
+
+    var precoAlcool by rememberSaveable { mutableStateOf(postoOriginal.alcool) }
+    var precoGasolina by rememberSaveable { mutableStateOf(postoOriginal.gasolina) }
+    var posto by rememberSaveable { mutableStateOf(postoOriginal.nome) }
+    var usarSetentaECinco by rememberSaveable { mutableStateOf(postoOriginal.usar75 ) }
+
     var resultado by remember { mutableStateOf("") }
 
     val percentual = if (usarSetentaECinco) 0.75 else 0.70
@@ -84,7 +85,6 @@ fun AdicionarPosto(voltar: () -> Unit) {
                 // onCheckedChange = { usarSetentaECinco = it }
                 onCheckedChange = { novoValor ->
                     usarSetentaECinco = novoValor
-                    prefs.edit().putBoolean("usar75", novoValor).apply()
                 }
             )
         }
@@ -129,12 +129,12 @@ fun AdicionarPosto(voltar: () -> Unit) {
                         usar75 = usarSetentaECinco
                     )
 
-                    salvarPostoJSONEmLista(context, novoPosto)
+                    editarPosto(context, index, novoPosto)
                     /*val sp: SharedPreferences = context.getSharedPreferences("POSTOS", Context.MODE_PRIVATE)
                     val json = sp.getString("lista", "[]") ?: "[]"
                     resultado = json*/ // Para saber se criou mesmo a lista
 
-                    resultado = "Posto adicionado! \n"
+                    resultado = "Posto modificado! \n"
                     voltar()
                 } else {
                     resultado = "Preencha todos os campos necessários!"

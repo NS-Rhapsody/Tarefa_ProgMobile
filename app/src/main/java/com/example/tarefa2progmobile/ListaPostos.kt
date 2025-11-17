@@ -21,7 +21,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ListaPostos(irParaAdicionarPosto: () -> Unit) {
+fun ListaPostos(
+    irParaAdicionarPosto: () -> Unit,
+    irParaEditarPosto: (Int) -> Unit
+) {
     val context = LocalContext.current
     var lista by remember { mutableStateOf(carregarListaPosto(context)) }
     Column(
@@ -38,6 +41,13 @@ fun ListaPostos(irParaAdicionarPosto: () -> Unit) {
                     .fillMaxWidth()
             ) {
                 Text("${posto.nome}")
+                Button(
+                    onClick = {
+                        irParaEditarPosto(index)
+                    }
+                ) {
+                    Text("Editar")
+                }
                 Button(
                     onClick = {
                         deletarPosto(context, index)
