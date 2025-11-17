@@ -45,3 +45,16 @@ fun salvarPostoJSONEmLista(context: Context, posto: Posto){
     editor.putString("lista",jsonArray.toString())
     editor.apply()
 }
+
+fun carregarListaPosto(context: Context): MutableList<Posto> {
+    val sp = context.getSharedPreferences("POSTOS", Context.MODE_PRIVATE)
+    val jsonListStr = sp.getString("lista", "[]")
+    val jsonArray = JSONArray(jsonListStr)
+
+    val lista = mutableListOf<Posto>()
+    for (i in 0 until jsonArray.length()){
+        val obj = jsonArray.getJSONObject(i)
+        lista.add(jsonParaPosto(obj))
+    }
+    return lista
+}

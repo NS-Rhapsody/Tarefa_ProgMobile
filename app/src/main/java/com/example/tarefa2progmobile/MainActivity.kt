@@ -1,10 +1,14 @@
 package com.example.tarefa2progmobile
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -14,6 +18,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.tarefa2progmobile.ui.theme.Tarefa2ProgMobileTheme
 
 
@@ -26,7 +33,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AlcoolOuGasolinaApp()
+                    AppNav()
                 }
             }
         }
@@ -34,7 +41,47 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AlcoolOuGasolinaApp() {
+fun AppNav() {
+    val nav = rememberNavController()
+
+    NavHost(navController = nav, startDestination = "lista"){
+        composable("lista"){
+            ListaPostos(
+                irParaAdicionarPosto = { nav.navigate("adicionarPosto") }
+            )
+        }
+
+        composable("adicionarPosto"){
+            AlcoolOuGasolinaApp(
+                voltar = { nav.popBackStack() }
+            )
+        }
+    }
+}
+
+@Composable
+fun ListaPostos(irParaAdicionarPosto: () -> Unit) {
+    val context = LocalContext.current
+    var lista by remember { mutableStateOf(carregarListaPosto(context)) }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(lista.joinToString())
+        Button(
+            onClick = irParaAdicionarPosto
+        ) {
+            Text("Adicionar novo posto")
+        }
+    }
+}
+
+@Composable
+fun AlcoolOuGasolinaApp(voltar: () -> Unit) {
 
     // Shared Preferences
 
@@ -137,7 +184,14 @@ fun AlcoolOuGasolinaApp() {
                         usar75 = usarSetentaECinco
                     )
 
-                    salvarPostoJSONEmLista(novoPosto)
+                    salvarPostoJSONEmLista(context, novoPosto)
+                    /*val sp: SharedPreferences = context.getSharedPreferences("POSTOS", Context.MODE_PRIVATE)
+                    val json = sp.getString("lista", "[]") ?: "[]"
+                    resultado = json*/ // Para saber se criou mesmo a lista
+                    val lista  = carregarListaPosto(context)
+
+                    resultado = "Posto adicionado! \n" + lista.joinToString()
+                    voltar()
                 } else {
                     resultado = "Preencha todos os campos necessários!"
                 }
@@ -153,6 +207,6 @@ fun AlcoolOuGasolinaApp() {
 @Composable
 fun PreviewApp() {
     Tarefa2ProgMobileTheme {
-        AlcoolOuGasolinaApp()
+        AlcoolOuGasolinaApp({})
     }
 }
