@@ -25,12 +25,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController // <- MUDANÇA 1: Importação nova
+import android.Manifest
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.google.android.gms.location.LocationServices
 
 @Composable
 fun AdicionarPosto(navController: NavController) { // <- MUDANÇA 2: Recebe NavController
 
     // Shared Preferences
     val context = LocalContext.current
+    val fusedLocationClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
     val prefs = context.getSharedPreferences("MEUS_DADOS", Context.MODE_PRIVATE)
 
     var precoAlcool by rememberSaveable { mutableStateOf("") }
@@ -42,6 +55,9 @@ fun AdicionarPosto(navController: NavController) { // <- MUDANÇA 2: Recebe NavC
         )
     }
     var resultado by remember { mutableStateOf("") }
+
+    var userLatitude by rememberSaveable { mutableStateOf<Double?>(null) }
+    var userLongitude by rememberSaveable { mutableStateOf<Double?>(null) }
 
     val percentual = if (usarSetentaECinco) 0.75 else 0.70
 
@@ -55,7 +71,7 @@ fun AdicionarPosto(navController: NavController) { // <- MUDANÇA 2: Recebe NavC
         OutlinedTextField(
             value = precoAlcool,
             onValueChange = { precoAlcool = it },
-            label = { Text("Preço do Álcool (R$)") },
+            label = { Text(stringResource(R.string.preco_alcool)) },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -64,7 +80,7 @@ fun AdicionarPosto(navController: NavController) { // <- MUDANÇA 2: Recebe NavC
         OutlinedTextField(
             value = precoGasolina,
             onValueChange = { precoGasolina = it },
-            label = { Text("Preço da Gasolina (R$)") },
+            label = { Text(stringResource(R.string.preco_gasolina)) },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -80,7 +96,13 @@ fun AdicionarPosto(navController: NavController) { // <- MUDANÇA 2: Recebe NavC
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("${if (usarSetentaECinco) "75%" else "70%"}")
+            Text(
+                if (usarSetentaECinco)
+                    stringResource(R.string.porcentagem_75)
+                else
+                    stringResource(R.string.porcentagem_70)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
             Switch(
                 checked = usarSetentaECinco,
                 onCheckedChange = { novoValor ->
@@ -94,23 +116,34 @@ fun AdicionarPosto(navController: NavController) { // <- MUDANÇA 2: Recebe NavC
 
         Button(
             onClick = {
+                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(stringResource(R.string.obter_localizacao))
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = {
                 val alcool = precoAlcool.toDoubleOrNull()
                 val gasolina = precoGasolina.toDoubleOrNull()
 
                 if (alcool != null && gasolina != null && gasolina > 0) {
                     val limite = gasolina * percentual
                     resultado = if (alcool <= limite) {
-                        "Melhor usar Álcool"
+                        context.getString(R.string.resultado_alcool)
                     } else {
-                        "Melhor usar Gasolina"
+                        context.getString(R.string.resultado_gasolina)
                     }
                 } else {
-                    resultado = "Preencha os valores corretamente!"
+                    context.getString(R.string.resultado_gasolina)
                 }
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Calcular")
+            Text(stringResource(R.string.calcular))
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -119,6 +152,22 @@ fun AdicionarPosto(navController: NavController) { // <- MUDANÇA 2: Recebe NavC
             text = resultado,
             style = MaterialTheme.typography.titleMedium
         )
+
+        if (resultado.isNotEmpty() && posto.isNotEmpty() && userLatitude != null) {
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = {
+                    val gmmIntentUri =
+                        Uri.parse("geo:${userLatitude},${userLongitude}?q=$posto")
+                    val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                    mapIntent.setPackage("com.google.android.apps.maps")
+                    context.startActivity(mapIntent)
+                }
+            ) {
+                Text(stringResource(R.string.abrir_mapa))
+            }
+        }
 
         Button(
             onClick = {
